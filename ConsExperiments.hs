@@ -13,6 +13,8 @@ data Cons a b = Cons { consID :: Unique , car :: a , cdr :: b }
 data TreeFix n l r = TreeIn { treeOut :: n (l (TreeFix n l r))
                                            (r (TreeFix n l r)) }
 
+type MEitherCons a b = TreeFix MCons (Either a) (Either b)
+
 mcons :: a -> b -> IO (MCons a b)
 mcons a b = MCons <$> newUnique <*> newIORef a <*> newIORef b
 
