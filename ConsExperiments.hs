@@ -3,7 +3,6 @@
 module ConsExperiments where
 
 import Control.Applicative
---import Control.Monad.ST
 import Control.Monad.ST.Lazy hiding (unsafeIOToST)
 import Control.Monad.ST.Lazy.Unsafe
 import Control.Monad.State
@@ -22,6 +21,9 @@ data Cons a b = Cons { consID :: Unique , car :: a , cdr :: b }
 
 instance (Show a, Show b) => Show (ConsF (Either a) (Either b)) where
    show (TreeIn (Cons _ a b)) = "TreeIn (Cons _ (" ++ show a ++ ") (" ++ show b ++ "))"
+
+instance Show (ConsF Maybe Maybe) where
+   show (TreeIn (Cons _ a b)) = "TreeIn (Cons _ " ++ show a ++ " " ++ show b ++ ")"
 
 data TreeFix n l r = TreeIn { treeOut :: n (l (TreeFix n l r))
                                            (r (TreeFix n l r)) }
@@ -91,6 +93,6 @@ freeze c = flip freeze' c =<< newSTRef M.empty
 
 main :: IO ()
 main = print $ runST $ do
-   x <- mconsF (Left 1) (Left 2)
-   setCdrF x (Right x)
+   x <- mconsF Nothing Nothing
+   --setCdrF x (Right x)
    freeze x
