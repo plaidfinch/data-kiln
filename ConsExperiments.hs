@@ -27,14 +27,11 @@ import Data.Functor
 import Data.Fix
 import Data.Functor.Compose
 
-instance (Show (f (g a))) => Show (Compose f g a) where
-    show = show . getCompose
-
 data Distinct x = Distinct Unique x
    deriving ( Functor , Foldable , Traversable , Eq , Ord )
 
 distinguish :: MonadUnique m => x -> m (Distinct x)
-distinguish x = flip Distinct x <$> newUnique
+distinguish x = flip Distinct x <$> unsafeIOToST U.newUnique
 
 identity :: Distinct x -> Unique
 identity (Distinct u _) = u
@@ -42,28 +39,7 @@ identity (Distinct u _) = u
 undistinguish :: Distinct x -> x
 undistinguish (Distinct _ x) = x
 
-class (Functor m, Monad m) => MonadUnique m where
-   newUnique :: m Unique
-instance MonadUnique IO where
-   newUnique = U.newUnique
-instance MonadUnique (ST s) where
-   newUnique = unsafeIOToST U.newUnique
-
-data Pair x = Pair { car :: x , cdr :: x }
-   deriving ( Functor , Foldable , Traversable , Show , Eq , Ord )
-
-setCar, setCdr ::  x -> Pair x -> Pair x
-setCar a' (Pair a b) = Pair a' b
-setCdr b' (Pair a b) = Pair a  b'
-
-instance Applicative Pair where
-   pure x = Pair x x
-   (Pair f g) <*> (Pair a b) = Pair (f a) (g b)
-
 type RefStruct s f = Fix (Compose (Compose Distinct (STRef s)) f)
-
-unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))
-unFixCompose2 = getCompose . getCompose . unFix
 
 new :: f (RefStruct s f) -> ST s (RefStruct s f)
 new = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
@@ -86,6 +62,12 @@ freeze = (newSTRef M.empty >>=) . flip freeze'
             structID  = identity      unwrapped
             structRef = undistinguish unwrapped
             unwrapped = unFixCompose2 struct
+
+unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))
+unFixCompose2 = getCompose . getCompose . unFix
+
+instance (Show (f (g a))) => Show (Compose f g a) where
+   show = show . getCompose
 
 test :: IO ()
 test = print $ runST $ do
