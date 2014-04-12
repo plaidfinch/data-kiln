@@ -36,13 +36,16 @@ data Distinct x = Distinct
    , undistinguish :: x
    } deriving ( Eq , Ord )
 
-distinguish :: x -> ST s (Distinct x)
-distinguish x = flip Distinct x <$> unsafeIOToST U.newUnique
+distinguish :: x -> IO (Distinct x)
+distinguish x = flip Distinct x <$> U.newUnique
+
+distinguishST :: x -> ST s (Distinct x)
+distinguishST = unsafeIOToST . distinguish
 
 type RefStruct s f = Fix (Compose (Compose Distinct (STRef s)) f)
 
 new :: f (RefStruct s f) -> ST s (RefStruct s f)
-new = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
+new = (Fix . Compose . Compose <$>) . (distinguishST =<<) . newSTRef
 
 modify :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
 modify = modifySTRef . undistinguish . unFixCompose2
