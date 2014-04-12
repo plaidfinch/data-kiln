@@ -62,9 +62,8 @@ freeze = (newSTRef M.empty >>=) . flip freeze'
             frozen <- (Fix <$>) $ traverse (freeze' seen) =<< readSTRef structRef
             modifySTRef seen (M.insert structID frozen) $> frozen
          where
-            structID  = identity      unwrapped
-            structRef = undistinguish unwrapped
-            unwrapped = unFixCompose2 struct
+            (structID, structRef) =
+               (identity &&& undistinguish) . unFixCompose2 $ struct
 
 unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))
 unFixCompose2 = getCompose . getCompose . unFix
