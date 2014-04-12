@@ -50,8 +50,8 @@ new = (Fix . Compose . Compose <$>) . (distinguishST =<<) . newSTRef
 modify :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
 modify = modifySTRef . undistinguish . unFixCompose2
 
-uncomposedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
-uncomposedly f = Compose . f . getCompose
+composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
+composedly f = Compose . f . getCompose
 
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
 freeze = (newSTRef M.empty >>=) . flip freeze'
