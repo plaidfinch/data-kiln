@@ -8,7 +8,7 @@ module Midas
    , RefStruct
    , new
    , modify
-   , uncomposedly
+   , composedly
    , freeze
    ) where
 
