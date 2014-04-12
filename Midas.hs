@@ -1,43 +1,43 @@
-{-# LANGUAGE DeriveFunctor
-           , DeriveFoldable
-           , DeriveTraversable
-           , FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module ConsExperiments where
+module Midas
+   ( Distinct
+   , distinguish
+   , undistinguish
+   , identity
+   , RefStruct
+   , new
+   , modify
+   , uncomposedly
+   , freeze
+   ) where
 
-import Data.STRef.Lazy
-import Control.Monad.ST.Lazy hiding (unsafeIOToST)
-import Control.Monad.ST.Lazy.Unsafe
-
-import Data.Unique (Unique)
-import qualified Data.Unique as U
-
-import Data.Map (Map)
-import qualified Data.Map as M
+import Data.Fix
+import Data.Functor
+import Data.Functor.Compose
+import Data.Traversable
 
 import Control.Monad
 import Control.Applicative
 import Control.Arrow
 
-import Data.Traversable
-import Data.Foldable
-import Data.Monoid
-import Data.Functor
+import Control.Monad.ST.Lazy hiding (unsafeIOToST)
+import Control.Monad.ST.Lazy.Unsafe
+import Data.STRef.Lazy
 
-import Data.Fix
-import Data.Functor.Compose
+import           Data.Unique (Unique)
+import qualified Data.Unique as U
 
-data Distinct x = Distinct Unique x
-   deriving ( Functor , Foldable , Traversable , Eq , Ord )
+import           Data.Map (Map)
+import qualified Data.Map as M
 
-distinguish :: MonadUnique m => x -> m (Distinct x)
+data Distinct x = Distinct
+   { identity      :: Unique
+   , undistinguish :: x
+   } deriving ( Eq , Ord )
+
+distinguish :: x -> ST s (Distinct x)
 distinguish x = flip Distinct x <$> unsafeIOToST U.newUnique
-
-identity :: Distinct x -> Unique
-identity (Distinct u _) = u
-
-undistinguish :: Distinct x -> x
-undistinguish (Distinct _ x) = x
 
 type RefStruct s f = Fix (Compose (Compose Distinct (STRef s)) f)
 
@@ -68,10 +68,3 @@ unFixCompose2 = getCompose . getCompose . unFix
 
 instance (Show (f (g a))) => Show (Compose f g a) where
    show = show . getCompose
-
-test :: IO ()
-test = print $ runST $ do
-   x <- new (Compose ('x',[]))
-   y <- new (Compose ('y',[]))
-   z <- new (Compose ('z',[x,y]))
-   freeze z
