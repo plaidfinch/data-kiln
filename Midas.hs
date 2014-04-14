@@ -18,14 +18,14 @@ import Data.Functor.Compose
 import Data.Traversable
 
 import Control.Monad
-import Control.Applicative
+import Control.Applicative hiding ( empty )
 import Control.Arrow
 
 import Control.Monad.ST.Lazy
 import Data.STRef.Lazy
 
-import           Data.Map (Map)
-import qualified Data.Map as M
+import Prelude hiding ( lookup )
+import Data.Map ( insert , member , empty , lookup )
 
 -- | A RefStruct is a mutable ST reference, tagged with a unique identity, containing a Traversable value of type f, which itself contains more RefStructs; in other words, it's a structure made of mutable references with reference identity which can point to one another.
 type RefStruct s f = Fix (Compose (Compose (STDistinct s) (STRef s)) f)
@@ -44,13 +44,13 @@ composedly f = Compose . f . getCompose
 
 -- | Given a RefStruct s f, convert it into the fixed-point of a the functor f by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts (that is, the pseudo-reference-identity we've made) to tie the structure into a knot where there are cycles in the original graph of references. The result is an immutable cyclic lazy data structure isomorphic to its input.
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
-freeze = (newSTRef M.empty >>=) . flip freeze'
+freeze = (newSTRef empty >>=) . flip freeze'
    where
       freeze' seen struct = do
-         maybeSeen <- M.lookup structID <$> readSTRef seen
+         maybeSeen <- lookup structID <$> readSTRef seen
          flip (flip maybe return) maybeSeen $ do
             frozen <- (Fix <$>) $ traverse (freeze' seen) =<< readSTRef structRef
-            modifySTRef seen (M.insert structID frozen) $> frozen
+            modifySTRef seen (insert structID frozen) $> frozen
          where
             (structID, structRef) =
                (identity &&& undistinguish) . unFixCompose2 $ struct
