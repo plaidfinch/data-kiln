@@ -4,6 +4,10 @@ module Midas
    , modifyStruct
    , composedly
    , freeze
+   , module Data.Fix
+   , module Data.Functor.Compose
+   , module Data.Traversable
+   , module Control.Monad.ST.Lazy
    ) where
 
 import STDistinct
