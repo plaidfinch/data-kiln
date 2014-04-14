@@ -1,16 +1,12 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Midas
-   ( Distinct
-   , distinguish
-   , undistinguish
-   , identity
-   , RefStruct
-   , new
-   , modify
+   ( RefStruct
+   , newStruct
+   , modifyStruct
    , composedly
    , freeze
    ) where
+
+import STDistinct
 
 import Data.Fix
 import Data.Functor
@@ -21,38 +17,28 @@ import Control.Monad
 import Control.Applicative
 import Control.Arrow
 
-import Control.Monad.ST.Lazy hiding (unsafeIOToST)
-import Control.Monad.ST.Lazy.Unsafe
+import Control.Monad.ST.Lazy
 import Data.STRef.Lazy
-
-import           Data.Unique (Unique)
-import qualified Data.Unique as U
 
 import           Data.Map (Map)
 import qualified Data.Map as M
 
-data Distinct x = Distinct
-   { identity      :: Unique
-   , undistinguish :: x
-   } deriving ( Eq , Ord )
+-- | A RefStruct is a mutable ST reference, tagged with a unique identity, containing a Traversable value of type f, which itself contains more RefStructs; in other words, it's a structure made of mutable references with reference identity which can point to one another.
+type RefStruct s f = Fix (Compose (Compose (STDistinct s) (STRef s)) f)
 
-distinguish :: x -> IO (Distinct x)
-distinguish x = flip Distinct x <$> U.newUnique
+-- | Take a functor f containing a RefStruct of f, and wrap it in a mutable reference and a distinct tag, thus returning a new RefStruct of f.
+newStruct :: f (RefStruct s f) -> ST s (RefStruct s f)
+newStruct = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
 
-distinguishST :: x -> ST s (Distinct x)
-distinguishST = unsafeIOToST . distinguish
+-- | Apply a function (destructively) to the STRef contained in a RefStruct.
+modifyStruct :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
+modifyStruct = modifySTRef . undistinguish . unFixCompose2
 
-type RefStruct s f = Fix (Compose (Compose Distinct (STRef s)) f)
-
-new :: f (RefStruct s f) -> ST s (RefStruct s f)
-new = (Fix . Compose . Compose <$>) . (distinguishST =<<) . newSTRef
-
-modify :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
-modify = modifySTRef . undistinguish . unFixCompose2
-
+-- | Apply a function to the value inside a Compose.
 composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
 composedly f = Compose . f . getCompose
 
+-- | Given a RefStruct s f, convert it into the fixed-point of a the functor f by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts (that is, the pseudo-reference-identity we've made) to tie the structure into a knot where there are cycles in the original graph of references. The result is an immutable cyclic lazy data structure isomorphic to its input.
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
 freeze = (newSTRef M.empty >>=) . flip freeze'
    where
@@ -65,8 +51,6 @@ freeze = (newSTRef M.empty >>=) . flip freeze'
             (structID, structRef) =
                (identity &&& undistinguish) . unFixCompose2 $ struct
 
+-- Unwrap the three nested functors inside a (Fix (Compose (Compose f g) h)).
 unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))
 unFixCompose2 = getCompose . getCompose . unFix
-
-instance (Show (f (g a))) => Show (Compose f g a) where
-   show = show . getCompose
