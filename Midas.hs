@@ -1,7 +1,8 @@
 module Midas
    ( RefStruct
-   , newStruct
-   , modifyStruct
+   , ref
+   , deref
+   , modify
    , composedly
    , freeze
    , module Data.Fix
@@ -32,12 +33,16 @@ import Data.Map ( insert , empty , lookup )
 type RefStruct s f = Fix (Compose (Compose (STDistinct s) (STRef s)) f)
 
 -- | Take a functor f containing a RefStruct of f, and wrap it in a mutable reference and a distinct tag, thus returning a new RefStruct of f.
-newStruct :: f (RefStruct s f) -> ST s (RefStruct s f)
-newStruct = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
+ref :: f (RefStruct s f) -> ST s (RefStruct s f)
+ref = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
+
+-- | Takes a RefStruct f and exposes the first level of f inside it.
+deref :: RefStruct s f -> ST s (f (RefStruct s f))
+deref = readSTRef . undistinguish . unFixCompose2
 
 -- | Apply a function (destructively) to the STRef contained in a RefStruct.
-modifyStruct :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
-modifyStruct = modifySTRef . undistinguish . unFixCompose2
+modify :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
+modify = modifySTRef . undistinguish . unFixCompose2
 
 -- | Apply a function to the value inside a Compose.
 composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
