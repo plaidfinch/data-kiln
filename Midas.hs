@@ -47,11 +47,10 @@ composedly f = Compose . f . getCompose
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
 freeze = (newSTRef empty >>=) . flip freeze'
    where
-      freeze' seen struct = do
-         maybeSeen <- lookup structID <$> readSTRef seen
-         flip (flip maybe return) maybeSeen $ do
+      freeze' seen struct =
+         aifM (lookup structID <$> readSTRef seen) return $ do
             frozen <- (Fix <$>) $ traverse (freeze' seen) =<< readSTRef structRef
-            returning (modifySTRef seen . insert structID) frozen
+            modifySTRef seen . insert structID `returning` frozen
          where
             (structID, structRef) =
                (identity &&& undistinguish) . unFixCompose2 $ struct
