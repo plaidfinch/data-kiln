@@ -41,7 +41,6 @@ list1 = runST $ do
    c <- cons 'c' Nothing
    setCdr a $ Just b
    setCdr b $ Just c
-   setCdr c $ Just a
    freeze a
 
 sllToList :: SLL a -> [a]

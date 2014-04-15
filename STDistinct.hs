@@ -7,8 +7,8 @@ module STDistinct
 
 import STUnique
 
-import Control.Applicative
-import Control.Monad.ST.Lazy
+import Control.Monad.ST.Lazy ( ST )
+import Control.Applicative   ( (<$>) )
 
 -- | An STDistinct is anything paired with a unique value. STDistinct values are guaranteed to be distinct from one another within any given run of a program; as such, they are intended to be used to implement reference identity in the ST monad.
 data STDistinct s x = STDistinct
