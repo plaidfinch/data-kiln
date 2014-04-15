@@ -26,7 +26,7 @@ import Control.Monad.ST.Lazy
 import Data.STRef.Lazy
 
 import Prelude hiding ( lookup )
-import Data.Map ( insert , member , empty , lookup )
+import Data.Map ( insert , empty , lookup )
 
 -- | A RefStruct is a mutable ST reference, tagged with a unique identity, containing a Traversable value of type f, which itself contains more RefStructs; in other words, it's a structure made of mutable references with reference identity which can point to one another.
 type RefStruct s f = Fix (Compose (Compose (STDistinct s) (STRef s)) f)
