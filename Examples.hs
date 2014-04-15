@@ -4,14 +4,15 @@ module MidasExamples where
 
 import Midas
 
-graph1 :: Fix (Compose ((,) Char) [])
+graph1 :: Node Char Char
 graph1 = runST $ do
-   rec a <- node 'a' [b,c,d]
-       b <- node 'b' [c,d]
-       c <- node 'c' [d]
-       d <- node 'd' [a]
+   rec a <- node 'a' [('b',b)]
+       b <- node 'b' [('c',c),('d',d)]
+       c <- node 'c' []
+       d <- node 'd' []
    freeze a
 
-node :: t -> f (RefStruct s (Compose ((,) t) f)) -> ST s (RefStruct s (Compose ((,) t) f))
-node tag list = newStruct (Compose (tag,list))
+node tag list = newStruct (Compose (Compose (tag,list)))
+
+type Node n e = Fix (Compose (Compose ((,) n) []) ((,) e))
 
