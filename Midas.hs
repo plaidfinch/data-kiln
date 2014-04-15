@@ -18,6 +18,7 @@ import Data.Functor.Compose
 import Data.Traversable
 
 import Control.Monad
+import Control.Monad.IfElse
 import Control.Applicative hiding ( empty )
 import Control.Arrow
 
@@ -50,7 +51,7 @@ freeze = (newSTRef empty >>=) . flip freeze'
          maybeSeen <- lookup structID <$> readSTRef seen
          flip (flip maybe return) maybeSeen $ do
             frozen <- (Fix <$>) $ traverse (freeze' seen) =<< readSTRef structRef
-            modifySTRef seen (insert structID frozen) $> frozen
+            returning (modifySTRef seen . insert structID) frozen
          where
             (structID, structRef) =
                (identity &&& undistinguish) . unFixCompose2 $ struct
