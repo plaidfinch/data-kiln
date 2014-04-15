@@ -62,5 +62,6 @@ freezeWith transform = (newSTRef empty >>=) . flip freeze'
             (structID, structRef) =
                (identity &&& undistinguish) . getStruct $ struct
 
+-- | Freeze a RefStruct using the identity transformation, so that a RefStruct s f turns into a Fix f.
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
 freeze = freezeWith id
