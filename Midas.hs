@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Midas
    ( RefStruct
    , ref
@@ -5,6 +7,7 @@ module Midas
    , modify
    , composedly
    , freeze
+   , freezeWith
    , module Data.Fix
    , module Data.Functor.Compose
    , module Data.Traversable
@@ -48,17 +51,20 @@ modify = modifySTRef . undistinguish . unFixCompose2
 composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
 composedly f = Compose . f . getCompose
 
--- | Given a RefStruct s f, convert it into the fixed-point of a the functor f by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts (that is, the pseudo-reference-identity we've made) to tie the structure into a knot where there are cycles in the original graph of references. The result is an immutable cyclic lazy data structure isomorphic to its input.
-freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
-freeze = (newSTRef empty >>=) . flip freeze'
+-- | Given a RefStruct s f, use a natural transformation (forall a. f a -> g a) to convert it into the fixed-point of a the functor g by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts to tie knots where there are cycles in the original graph of references. TThe result is an immutable cyclic lazy data structure.
+freezeWith :: (Traversable f) => (forall a. f a -> g a) -> RefStruct s f -> ST s (Fix g)
+freezeWith transform = (newSTRef empty >>=) . flip freeze'
    where
       freeze' seen struct =
          aifM (lookup structID <$> readSTRef seen) return $ do
-            frozen <- (Fix <$>) $ traverse (freeze' seen) =<< readSTRef structRef
+            frozen <- (Fix . transform <$>)  $ traverse (freeze' seen) =<< readSTRef structRef
             modifySTRef seen . insert structID `returning` frozen
          where
             (structID, structRef) =
                (identity &&& undistinguish) . unFixCompose2 $ struct
+
+freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
+freeze = freezeWith id
 
 -- Unwrap the three nested functors inside a (Fix (Compose (Compose f g) h)).
 unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))

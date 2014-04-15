@@ -9,8 +9,7 @@ import Data.List
 import Data.Traversable
 
 type MNode s n e = RefStruct s (Compose (Compose ((,) n) []) ((,) e))
-
-type Node n e = Fix (Compose (Compose ((,) n) []) ((,) e))
+type Node    n e =         Fix (Compose (Compose ((,) n) []) ((,) e))
 
 node :: n -> [(e,MNode s n e)] -> ST s (MNode s n e)
 node tag list = ref (Compose (Compose (tag,list)))
@@ -24,8 +23,7 @@ graph1 = runST $ do
    freeze a
 
 type MSLL s a = RefStruct s (Compose ((,) a) Maybe)
-
-type SLL a = Fix (Compose ((,) a) Maybe)
+type SLL    a =         Fix (Compose ((,) a) Maybe)
 
 cons :: a -> Maybe (MSLL s a) -> ST s (MSLL s a)
 cons car cdr = ref (Compose (car,cdr))
