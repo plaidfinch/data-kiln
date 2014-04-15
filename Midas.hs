@@ -17,7 +17,6 @@ module Midas
 import STDistinct
 
 import Data.Fix
-import Data.Functor
 import Data.Functor.Compose
 import Data.Traversable
 
@@ -29,23 +28,23 @@ import Control.Arrow
 import Control.Monad.ST.Lazy
 import Data.STRef.Lazy
 
-import Prelude hiding ( lookup )
-import Data.Map ( insert , empty , lookup )
+import Prelude hiding ( lookup , foldr )
+import Data.Map ( Map , insert , empty , lookup )
 
 -- | A RefStruct is a mutable ST reference, tagged with a unique identity, containing a Traversable value of type f, which itself contains more RefStructs; in other words, it's a structure made of mutable references with reference identity which can point to one another.
-type RefStruct s f = Fix (Compose (Compose (STDistinct s) (STRef s)) f)
+newtype RefStruct s f = RefStruct { getStruct :: STDistinct s (STRef s (f (RefStruct s f))) }
 
 -- | Take a functor f containing a RefStruct of f, and wrap it in a mutable reference and a distinct tag, thus returning a new RefStruct of f.
 ref :: f (RefStruct s f) -> ST s (RefStruct s f)
-ref = (Fix . Compose . Compose <$>) . (distinguish =<<) . newSTRef
+ref = (RefStruct <$>) . (distinguish =<<) . newSTRef
 
 -- | Takes a RefStruct f and exposes the first level of f inside it.
 deref :: RefStruct s f -> ST s (f (RefStruct s f))
-deref = readSTRef . undistinguish . unFixCompose2
+deref = readSTRef . undistinguish . getStruct
 
 -- | Apply a function (destructively) to the STRef contained in a RefStruct.
 modify :: RefStruct s f -> (f (RefStruct s f) -> f (RefStruct s f)) -> ST s ()
-modify = modifySTRef . undistinguish . unFixCompose2
+modify = modifySTRef . undistinguish . getStruct
 
 -- | Apply a function to the value inside a Compose.
 composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
@@ -61,11 +60,7 @@ freezeWith transform = (newSTRef empty >>=) . flip freeze'
             modifySTRef seen . insert structID `returning` frozen
          where
             (structID, structRef) =
-               (identity &&& undistinguish) . unFixCompose2 $ struct
+               (identity &&& undistinguish) . getStruct $ struct
 
 freeze :: (Traversable f) => RefStruct s f -> ST s (Fix f)
 freeze = freezeWith id
-
--- Unwrap the three nested functors inside a (Fix (Compose (Compose f g) h)).
-unFixCompose2 :: Fix (Compose (Compose f g) h) -> f (g (h (Fix (Compose (Compose f g) h))))
-unFixCompose2 = getCompose . getCompose . unFix
