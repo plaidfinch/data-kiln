@@ -56,7 +56,7 @@ freezeWith transform = (newSTRef empty >>=) . flip freeze'
    where
       freeze' seen struct =
          aifM (lookup structID <$> readSTRef seen) return $ do
-            frozen <- (Fix . transform <$>)  $ traverse (freeze' seen) =<< readSTRef structRef
+            frozen <- (Fix . transform <$>) $ traverse (freeze' seen) =<< readSTRef structRef
             modifySTRef seen . insert structID `returning` frozen
          where
             (structID, structRef) =
