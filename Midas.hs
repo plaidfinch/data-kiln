@@ -1,4 +1,5 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes    #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Midas
    ( RefStruct
@@ -50,8 +51,11 @@ modify = modifySTRef . undistinguish . getStruct
 composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
 composedly f = Compose . f . getCompose
 
+-- | The type of natural transformations from f to g.
+type f ~> g = forall a. f a -> g a
+
 -- | Given a RefStruct s f, use a natural transformation (forall a. f a -> g a) to convert it into the fixed-point of a the functor g by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts to tie knots where there are cycles in the original graph of references. TThe result is an immutable cyclic lazy data structure.
-freezeWith :: (Traversable f) => (forall a. f a -> g a) -> RefStruct s f -> ST s (Fix g)
+freezeWith :: (Traversable f) => (f ~> g) -> RefStruct s f -> ST s (Fix g)
 freezeWith transform = (newSTRef empty >>=) . flip freeze'
    where
       freeze' seen struct =
