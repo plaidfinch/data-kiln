@@ -1,17 +1,22 @@
 module MidasExamples where
 
-import Midas
-import Control.Monad.Squishy
+import Data.Kiln
 
 import Control.Arrow
 import Data.List
+import Data.Functor.Compose
 import Data.Traversable
+import Data.Foldable
+
+-- | Apply a function to the value inside a Compose.
+composedly :: (f (g a) -> f' (g' a')) -> Compose f g a -> Compose f' g' a'
+composedly f = Compose . f . getCompose
 
 type MNode s n e = Clay s (Compose (Compose ((,) n) []) ((,) e))
 type Node    n e =    Fix (Compose (Compose ((,) n) []) ((,) e))
 
 node :: n -> [(e,MNode s n e)] -> Squishy s (MNode s n e)
-node tag list = ref (Compose (Compose (tag,list)))
+node tag list = newClay (Compose (Compose (tag,list)))
 
 --graph1 :: Node Char Char
 --graph1 = runSquishy $ do
@@ -25,20 +30,20 @@ type MSLL s a = Clay s (Compose ((,) a) Maybe)
 type SLL    a =    Fix (Compose ((,) a) Maybe)
 
 cons :: a -> Maybe (MSLL s a) -> Squishy s (MSLL s a)
-cons car cdr = ref (Compose (car,cdr))
+cons car cdr = newClay (Compose (car, cdr))
 
 setCar :: MSLL s a -> a -> Squishy s ()
-setCar x = modify x . composedly . first  . const
+setCar x = modifyClay x . composedly . first  . const
 
 setCdr :: MSLL s a -> Maybe (MSLL s a) -> Squishy s ()
-setCdr x = modify x . composedly . second . const
+setCdr x = modifyClay x . composedly . second . const
 
 list1 :: SLL Char
-list1 = runFreezing $ do
+list1 = runKilning $ do
    a <- cons 'a' Nothing
    b <- cons 'b' (Just a)
    c <- cons 'c' (Just b)
-   setCdr a $ Just a
+   setCdr a $ Just c
    return c
 
 sllToList :: SLL a -> [a]

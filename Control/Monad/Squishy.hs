@@ -55,6 +55,10 @@ conflate (Distinct a _) = a
 identify :: Distinct s a -> Identifier s
 identify (Distinct _ i) = i
 
+-- | Compares by reference identity
+(===) :: Distinct s a -> Distinct s b -> Bool
+x === y = identify x == identify y
+
 -- The mutable reference API from Data.STRef, lifted through to the Squishy monad
 
 newtype Ref s a = Ref (STRef s a)
