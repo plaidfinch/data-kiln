@@ -11,6 +11,7 @@ module Control.Monad.Squishy
 
 import Control.Monad.ST.Lazy
 import Data.STRef.Lazy
+import Control.Monad.State
 import Control.Monad.Reader
 import Control.Applicative
 
@@ -21,12 +22,12 @@ initialID = 0
 
 -- | The Squishy monad is a monad with mutable references and optional reference identity
 newtype Squishy s a =
-   Squishy { getSquishy :: ReaderT (STRef s ID) (ST s) a }
+   Squishy { getSquishy :: StateT ID (ST s) a }
    deriving ( Functor, Applicative, Monad )
 
 -- | Runs a Squishy computation, returning a pure value
 runSquishy :: forall a. (forall s. Squishy s a) -> a
-runSquishy x = runST $ newSTRef initialID >>= runReaderT (getSquishy x)
+runSquishy x = runST $ evalStateT (getSquishy x) 0
 --runSquishy (Squishy x) = runST $ evalStateT x initialID -- doesn't work, though it should be equivalent
 
 -- | A unique identifier. Only possible to create while making a Distinct value.
@@ -42,9 +43,8 @@ distinguish :: a -> Squishy s (Distinct s a)
 distinguish a = Distinct a <$> newIdentifier
    where
       newIdentifier = Squishy $ do
-         r <- ask
-         x <- lift $ readSTRef r
-         lift $ writeSTRef r (succ x)
+         x <- get
+         put (succ x)
          return (Identifier x)
 
 -- | Extracts the value stored in a Distinct
