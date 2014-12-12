@@ -1,5 +1,3 @@
- {-# LANGUAGE RecursiveDo #-}
-
 module MidasExamples where
 
 import Midas
@@ -40,8 +38,8 @@ list1 = runFreezing $ do
    a <- cons 'a' Nothing
    b <- cons 'b' (Just a)
    c <- cons 'c' (Just b)
-   setCdr a $ Just b
-   return a
+   setCdr a $ Just a
+   return c
 
 sllToList :: SLL a -> [a]
 sllToList sll = case (getCompose . unFix) sll of

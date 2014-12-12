@@ -6,11 +6,11 @@ module Control.Monad.Squishy
    ( Squishy , runSquishy
    , Identifier
    , Distinct , distinguish, conflate, identify
-   , Ref , newRef , readRef , writeRef , modifyRef , modifyRef'
+   , Ref , newRef , readRef , writeRef , modifyRef
    ) where
 
-import Control.Monad.ST
-import Data.STRef
+import Control.Monad.ST.Lazy
+import Data.STRef.Lazy
 import Control.Monad.Reader
 import Control.Applicative
 
@@ -70,6 +70,3 @@ writeRef (Ref r) a = Squishy $ lift (writeSTRef r a)
 
 modifyRef :: Ref s a -> (a -> a) -> Squishy s ()
 modifyRef (Ref r) a = Squishy $ lift (modifySTRef r a)
-
-modifyRef' :: Ref s a -> (a -> a) -> Squishy s ()
-modifyRef' (Ref r) a = Squishy $ lift (modifySTRef' r a)

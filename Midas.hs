@@ -1,15 +1,5 @@
-<<<<<<< HEAD
 {-# LANGUAGE RankNTypes    #-}
 {-# LANGUAGE TypeOperators #-}
-=======
-<<<<<<< Updated upstream
-{-# LANGUAGE RankNTypes #-}
-=======
-{-# LANGUAGE RankNTypes    #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE GADTs         #-}
->>>>>>> Stashed changes
->>>>>>> new_branch_name
 
 module Midas
    ( Clay
