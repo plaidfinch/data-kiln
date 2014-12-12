@@ -43,13 +43,13 @@ modifyClay = modifyRef . conflate . getClay
 kilnWith :: (Traversable f) => (forall a. f a -> g a) -> Clay s f -> Squishy s (Fix g)
 kilnWith transform = (newRef M.empty >>=) . flip kiln'
    where
-      kiln' seen mutable =
+      kiln' seen clay =
          aifM (M.lookup thisID <$> readRef seen) return $ do
             frozen <- (Fix . transform <$>) . traverse (kiln' seen) <=< readRef $ thisRef
             modifyRef seen . M.insert thisID `returning` frozen
          where
             (thisID, thisRef) =
-               (identify &&& conflate) . getClay $ mutable
+               (identify &&& conflate) . getClay $ clay
 
 -- | Freeze a Clay using the identity transformation, so that a Clay s f turns into a Fix f.
 kiln :: (Traversable f) => Clay s f -> Squishy s (Fix f)
