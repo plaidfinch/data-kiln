@@ -22,7 +22,7 @@ newtype Squishy s a =
 
 -- | Runs a Squishy computation, returning a pure value
 runSquishy :: forall a. (forall s. Squishy s a) -> a
-runSquishy x = runST $ evalStateT (getSquishy x) 0
+runSquishy x = runST $ evalStateT (getSquishy x) initialID
 --runSquishy (Squishy x) = runST $ evalStateT x initialID -- doesn't work, though it should be equivalent
 
 -- | A unique identifier. Only possible to create while making a Distinct value.
@@ -79,4 +79,4 @@ modifyRef (Ref r) a = Squishy $ lift (modifySTRef r a)
 -- This type is not exposed; it's used internally to implement unique identifiers
 type ID = Int
 initialID :: ID
-initialID = 0
+initialID = minBound
