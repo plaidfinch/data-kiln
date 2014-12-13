@@ -36,7 +36,12 @@ newtype Identifier s = Identifier ID deriving ( Eq, Ord )
 -- | Data with faked reference equality; the interface provided guarantees that every Distinct value has a unique Identifier.
 data Distinct s a =
    Distinct a (Identifier s)
-   deriving ( Eq, Ord )
+
+instance Eq (Distinct s a) where
+   a == b = identify a == identify b
+
+instance Ord (Distinct s a) where
+   compare a b = compare (identify a) (identify b)
 
 -- | The only way to create a Distinct value is to generate a new identifier for it in the Squishy monad.
 distinguish :: a -> Squishy s (Distinct s a)
@@ -54,10 +59,6 @@ conflate (Distinct a _) = a
 -- | Extracts the unique identifier for a Distinct
 identify :: Distinct s a -> Identifier s
 identify (Distinct _ i) = i
-
--- | Compares by reference identity
-(===) :: Distinct s a -> Distinct s b -> Bool
-x === y = identify x == identify y
 
 -- The mutable reference API from Data.STRef, lifted through to the Squishy monad
 
