@@ -1,4 +1,4 @@
-module MidasExamples where
+module Data.Kiln.Examples where
 
 import Data.Kiln
 
