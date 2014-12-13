@@ -24,26 +24,26 @@ import Control.Arrow
 import           Data.Map ( Map )
 import qualified Data.Map as M
 
--- | A Clay is a recursive structure with a uniquely-identified mutable reference at each node
+-- | A @Clay s f@ is a recursive structure with a uniquely-identified mutable reference at each node. It cannot escape the @Squishy@ monad, by means of the same mechanism as used in @Control.Monad.ST@.
 data Clay s f = Clay { getClay :: Distinct s (Ref s (f (Clay s f))) }
 
--- | Take a functor f containing a Clay of f, and wrap it in a mutable reference and a distinct tag, thus returning a new Clay of f.
+-- | Take a container @f (Clay s f)@, and wrap it in a new mutable reference and distinct tag, returning a new @Clay s f@.
 newClay :: f (Clay s f) -> Squishy s (Clay s f)
 newClay = (Clay <$>) . (distinguish =<<) . newRef
 
--- | Takes a Clay f and exposes the first level of f inside it.
+-- | Takes a @Clay s f@ and exposes the first level of @f (Clay s f)@ inside it.
 readClay :: Clay s f -> Squishy s (f (Clay s f))
 readClay = readRef . conflate . getClay
 
--- | Apply a function (destructively) to the STRef contained in a Clay.
+-- | Use the provided function to destructively update the value at this node of a @Clay s f@.
 modifyClay :: Clay s f -> (f (Clay s f) -> f (Clay s f)) -> Squishy s ()
 modifyClay = modifyRef . conflate . getClay
 
--- | Set a piece of Clay to a particular value.
+-- | Set a piece of @Clay@ to a particular value.
 writeClay :: Clay s f -> (f (Clay s f)) -> Squishy s ()
 writeClay = writeRef . conflate . getClay
 
--- | Get the Identifier for a piece of Clay.
+-- | Get the unique @Identifier@ for a piece of @Clay@.
 identifyClay :: Clay s f -> Identifier s
 identifyClay = identify . getClay
 
