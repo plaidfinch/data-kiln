@@ -47,7 +47,7 @@ writeClay = writeRef . conflate . getClay
 identifyClay :: Clay s f -> Identifier s
 identifyClay = identify . getClay
 
--- | Given a Clay s f, use a natural transformation (forall a. f a -> g a) to convert it into the fixed-point of a the functor g by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts to tie knots where there are cycles in the original graph of references. TThe result is an immutable cyclic lazy data structure.
+-- | Given a @Clay s f@, use a natural transformation @(forall a. f a -> g a)@ to convert it into the fixed-point of a the functor @g@ by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts to tie knots where there are cycles in the original graph of references. TThe result is an immutable cyclic lazy data structure.
 kilnWith :: (Traversable f) => (forall a. f a -> g a) -> Clay s f -> Squishy s (Fix g)
 kilnWith transform = flip evalStateT M.empty . kiln'
    where
@@ -60,8 +60,10 @@ kilnWith transform = flip evalStateT M.empty . kiln'
 kiln :: (Traversable f) => Clay s f -> Squishy s (Fix f)
 kiln = kilnWith id
 
+-- | Given a @Squishy@ monad action which returns a @Clay s f@, run the action and use the provided natural transformation during baking (see 'kilnWith').
 runKilningWith :: (Traversable f) => (forall a. f a -> g a) -> (forall s. Squishy s (Clay s f)) -> Fix g
 runKilningWith transform action = runSquishy (action >>= kilnWith transform)
 
+-- | Given a @Squishy@ monad action which returns a @Clay s f@, run the action and kiln the result.
 runKilning :: (Traversable f) => (forall s. Squishy s (Clay s f)) -> Fix f
 runKilning = runKilningWith id

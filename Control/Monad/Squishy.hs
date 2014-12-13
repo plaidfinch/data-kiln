@@ -15,11 +15,6 @@ import Control.Monad.State
 import Control.Monad.Reader
 import Control.Applicative
 
-type ID = Int
-
-initialID :: ID
-initialID = 0
-
 -- | The Squishy monad is a monad with mutable references and optional reference identity
 newtype Squishy s a =
    Squishy { getSquishy :: StateT ID (ST s) a }
@@ -62,16 +57,26 @@ identify (Distinct _ i) = i
 
 -- The mutable reference API from Data.STRef, lifted through to the Squishy monad
 
+-- | A mutable reference in the @Squishy@ monad.
 newtype Ref s a = Ref (STRef s a)
 
+-- | Make a new reference.
 newRef :: a -> Squishy s (Ref s a)
 newRef a = Squishy $ lift (Ref <$> newSTRef a)
 
+-- | Read the value of a reference.
 readRef :: Ref s a -> Squishy s a
 readRef (Ref r) = Squishy $ lift (readSTRef r)
 
+-- | Write a new value to a reference.
 writeRef :: Ref s a -> a -> Squishy s ()
 writeRef (Ref r) a = Squishy $ lift (writeSTRef r a)
 
+-- | Use the provided function to modify the contained value in a reference.
 modifyRef :: Ref s a -> (a -> a) -> Squishy s ()
 modifyRef (Ref r) a = Squishy $ lift (modifySTRef r a)
+
+-- This type is not exposed; it's used internally to implement unique identifiers
+type ID = Int
+initialID :: ID
+initialID = 0
