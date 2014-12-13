@@ -5,7 +5,7 @@
 module Control.Monad.Squishy 
    ( Squishy , runSquishy
    , Identifier
-   , Distinct , distinguish, conflate, identify
+   , Distinct , distinguish , conflate , identify
    , Ref , newRef , readRef , writeRef , modifyRef
    ) where
 

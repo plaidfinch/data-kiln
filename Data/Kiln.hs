@@ -1,7 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Data.Kiln
-   ( Clay , newClay , readClay , modifyClay, writeClay, identifyClay
+   ( Clay , newClay , readClay , modifyClay , writeClay , identifyClay
    , kiln , kilnWith
    , runKilningWith , runKilning
    , module Data.Fix
