@@ -1,7 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Data.Kiln
-   ( Clay , newClay , readClay , modifyClay
+   ( Clay , newClay , readClay , modifyClay, writeClay, identifyClay
    , kiln , kilnWith
    , runKilningWith , runKilning
    , module Data.Fix
@@ -39,16 +39,22 @@ readClay = readRef . conflate . getClay
 modifyClay :: Clay s f -> (f (Clay s f) -> f (Clay s f)) -> Squishy s ()
 modifyClay = modifyRef . conflate . getClay
 
+-- | Set a piece of Clay to a particular value.
+writeClay :: Clay s f -> (f (Clay s f)) -> Squishy s ()
+writeClay = writeRef . conflate . getClay
+
+-- | Get the Identifier for a piece of Clay.
+identifyClay :: Clay s f -> Identifier s
+identifyClay = identify . getClay
+
 -- | Given a Clay s f, use a natural transformation (forall a. f a -> g a) to convert it into the fixed-point of a the functor g by eliminating the indirection of the mutable references and using the distinct tags on the structure's parts to tie knots where there are cycles in the original graph of references. TThe result is an immutable cyclic lazy data structure.
 kilnWith :: (Traversable f) => (forall a. f a -> g a) -> Clay s f -> Squishy s (Fix g)
 kilnWith transform = flip evalStateT M.empty . kiln'
    where
       kiln' clay =
-         aifM (M.lookup thisID <$> get) return $ do
+         aifM (M.lookup (identifyClay clay) <$> get) return $ do
             baked <- (Fix . transform <$>) . traverse kiln' =<< lift (readClay clay)
-            modify (M.insert thisID baked) >> return baked
-         where
-            thisID = identify (getClay clay)
+            modify (M.insert (identifyClay clay) baked) >> return baked
 
 -- | Freeze a Clay using the identity transformation, so that a Clay s f turns into a Fix f.
 kiln :: (Traversable f) => Clay s f -> Squishy s (Fix f)
