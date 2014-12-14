@@ -2,17 +2,13 @@
 
 module Data.Kiln
    ( Clay , newClay , readClay , modifyClay , writeClay , identifyClay
-   , kiln , kilnWith
-   , runKilningWith , runKilning
-   , module Data.Fix
-   , module Data.Traversable
-   , module Control.Monad.Squishy
+   , kiln , kilnWith , runKilningWith , runKilning
+   , module X
    ) where
 
-import Control.Monad.Squishy
-
-import Data.Fix
-import Data.Traversable
+import Control.Monad.Squishy as X
+import Data.Fix              as X
+import Data.Traversable      as X
 
 import Control.Monad
 import Control.Monad.State
@@ -43,7 +39,7 @@ modifyClay :: Clay s f -> (f (Clay s f) -> f (Clay s f)) -> Squishy s ()
 modifyClay = modifyRef . conflate . getClay
 
 -- | Set a piece of @Clay@ to a particular value.
-writeClay :: Clay s f -> (f (Clay s f)) -> Squishy s ()
+writeClay :: Clay s f -> f (Clay s f) -> Squishy s ()
 writeClay = writeRef . conflate . getClay
 
 -- | Get the unique @Identifier@ for a piece of @Clay@.
