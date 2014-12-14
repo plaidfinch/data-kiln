@@ -13,7 +13,7 @@ import Data.Traversable      as X
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.IfElse
-import Control.Applicative hiding ( empty )
+import Control.Applicative
 import Control.Arrow
 
 import           Data.Map ( Map )
