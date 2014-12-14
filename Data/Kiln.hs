@@ -12,7 +12,6 @@ module Data.Kiln
 import Control.Monad.Squishy
 
 import Data.Fix
-import Data.Functor.Compose
 import Data.Traversable
 
 import Control.Monad
