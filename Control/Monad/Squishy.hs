@@ -1,5 +1,4 @@
 {-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Control.Monad.Squishy 
