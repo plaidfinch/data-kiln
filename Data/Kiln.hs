@@ -1,4 +1,5 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Kiln
    ( Clay , newClay , readClay , modifyClay , writeClay , identifyClay
@@ -51,9 +52,10 @@ identifyClay = identify . getClay
 --   indirection of the mutable references and using the distinct tags on the
 --   structure's parts to tie knots where there are cycles in the original graph
 --   of references. TThe result is an immutable cyclic lazy data structure.
-kilnWith :: (Traversable f) => (forall a. f a -> g a) -> Clay s f -> Squishy s (Fix g)
+kilnWith :: forall s f g. (Traversable f) => (forall a. f a -> g a) -> Clay s f -> Squishy s (Fix g)
 kilnWith transform = flip evalStateT M.empty . kiln'
    where
+      kiln' :: Clay s f -> StateT (Map (Identifier s) (Fix g)) (Squishy s) (Fix g)
       kiln' clay =
          aifM (M.lookup (identifyClay clay) <$> get) return $ do
             baked <- (Fix . transform <$>) . traverse kiln' =<< lift (readClay clay)
